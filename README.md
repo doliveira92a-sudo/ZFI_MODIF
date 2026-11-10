@@ -11,7 +11,7 @@ e executa as etapas logisticas que hoje sao manuais.
 
 1. **Estorno da fatura** (gancho no user exit do VF11, rapido): para cada titulo de cliente da fatura da NF
    - sem `ANFBN` (Solicitacao L/C) preenchida: sem boleto (bonificacao, a vista) - so log;
-   - com L/C e em aberto: guarda copia dos dados do boleto e grava no monitor (status *aguardando SEFAZ*). Opcionalmente (`ZFI_CBOL_LIMPAR`) limpa `HBKID/HKTID/BVTYP/ANFBN/ANFBU/ANFBJ` e troca a Atribuicao (`ZUONR`) para "NF cancelada";
+   - com L/C e em aberto: guarda copia dos dados do boleto e grava no monitor (status *aguardando SEFAZ*). **Nao altera o titulo** nesse momento;
    - titulo ja compensado (pago): aviso na tela, **nao bloqueia**; monitor marca "TITULO PAGO - lancar credito".
 2. **Apos autorizacao da SEFAZ** (job `ZFI_CBOL_JOB`, a cada poucos minutos): e-mail de aviso (boleto a cancelar no banco ou titulo pago) e, em ordem, **VL09** (estorno de mercadoria), **VL02N** (excluir remessa) e **VA02** (recusa por item, motivo na TVARV). Cada etapa grava status; erro nao trava as demais NFs.
 3. **Monitor `ZFI_CBOL`**: lista NFs estornadas, documentos ligados (fatura, remessa, doc. de material, ordem, doc. contabil de estorno), semaforos por etapa e colunas de acao (clique no icone): confirmar cancelado no banco, confirmar credito lancado, reprocessar, SEFAZ rejeitou, ver log.
@@ -45,7 +45,7 @@ Autorizacao: objeto padrao `F_BKPF_BUK` (ACTVT 03 exibir; 02 confirmar/reprocess
 | `ZFI_CBOL_BUKRS` | S | Empresas habilitadas (vazio = todas) |
 | `ZFI_CBOL_ABGRU` | P | Motivo de recusa da VA02 (padrao `Z1`) |
 | `ZFI_CBOL_LEMBRETE_H` | P | Horas ate o lembrete de pendencia no banco |
-| `ZFI_CBOL_LIMPAR` | P | `X` = alem de registrar, limpa os dados do boleto no titulo (padrao vazio: so registra) |
+| `ZFI_CBOL_LIMPAR` | P | `X` (padrao) = ao financeiro clicar em *confirmar banco* no monitor, limpa `HBKID/HKTID/BVTYP/ANFBN/ANFBU/ANFBJ` e troca `ZUONR` para "NF cancelada" (falha nao bloqueia a confirmacao; fica no log) |
 | `ZFI_CBOL_REMETENTE` | P | Remetente (opcional) |
 
 ### Jobs

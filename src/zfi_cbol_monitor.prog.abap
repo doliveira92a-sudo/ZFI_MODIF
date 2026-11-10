@@ -382,7 +382,7 @@ CLASS lcl_mon IMPLEMENTATION.
         zcl_fi_cbol_service=>processar_pendentes( ls_key-docnum ).
         ls_ret-ok = abap_true.
       WHEN 'AC_REJ'.
-        IF confirmar( |A SEFAZ rejeitou o cancelamento da NF { ls_out-nfenum }? Os dados do boleto voltarao ao titulo.| ) = abap_false.
+        IF confirmar( |Marcar que a SEFAZ rejeitou o cancelamento da NF { ls_out-nfenum }?| ) = abap_false.
           RETURN.
         ENDIF.
         ls_ret = zcl_fi_cbol_service=>marcar_rejeitado( ls_key ).

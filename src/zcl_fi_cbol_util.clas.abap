@@ -19,10 +19,40 @@ CLASS zcl_fi_cbol_util DEFINITION PUBLIC FINAL CREATE PUBLIC.
       fm_existe IMPORTING iv_fm TYPE rs38l_fnam
                 RETURNING VALUE(rv_ok) TYPE abap_bool,
       "! Mensagem do sy-msg* em texto
-      msg_sy RETURNING VALUE(rv_txt) TYPE char200.
+      msg_sy RETURNING VALUE(rv_txt) TYPE char200,
+      "! Texto da 1a mensagem de erro de uma tabela de protocolo (PROTT, MESG...)
+      texto_tabela IMPORTING it_tab        TYPE ANY TABLE
+                   RETURNING VALUE(rv_txt) TYPE char200.
 ENDCLASS.
 
 CLASS zcl_fi_cbol_util IMPLEMENTATION.
+
+  METHOD texto_tabela.
+    DATA: lv_id TYPE sy-msgid, lv_no TYPE sy-msgno, lv_ty TYPE sy-msgty,
+          lv_v1 TYPE sy-msgv1, lv_v2 TYPE sy-msgv2, lv_v3 TYPE sy-msgv3, lv_v4 TYPE sy-msgv4.
+    FIELD-SYMBOLS: <l> TYPE any, <f> TYPE any.
+    LOOP AT it_tab ASSIGNING <l>.
+      CLEAR: lv_id, lv_no, lv_ty, lv_v1, lv_v2, lv_v3, lv_v4.
+      ASSIGN COMPONENT 'MSGTY' OF STRUCTURE <l> TO <f>. IF sy-subrc = 0. lv_ty = <f>. ENDIF.
+      IF lv_ty CA 'EAX' OR lv_ty IS INITIAL.
+        ASSIGN COMPONENT 'MSGID' OF STRUCTURE <l> TO <f>. IF sy-subrc = 0. lv_id = <f>. ENDIF.
+        IF lv_id IS INITIAL.
+          ASSIGN COMPONENT 'ARBGB' OF STRUCTURE <l> TO <f>. IF sy-subrc = 0. lv_id = <f>. ENDIF.
+        ENDIF.
+        ASSIGN COMPONENT 'MSGNO' OF STRUCTURE <l> TO <f>. IF sy-subrc = 0. lv_no = <f>. ENDIF.
+        IF lv_no IS INITIAL.
+          ASSIGN COMPONENT 'TXTNR' OF STRUCTURE <l> TO <f>. IF sy-subrc = 0. lv_no = <f>. ENDIF.
+        ENDIF.
+        ASSIGN COMPONENT 'MSGV1' OF STRUCTURE <l> TO <f>. IF sy-subrc = 0. lv_v1 = <f>. ENDIF.
+        ASSIGN COMPONENT 'MSGV2' OF STRUCTURE <l> TO <f>. IF sy-subrc = 0. lv_v2 = <f>. ENDIF.
+        IF lv_id IS NOT INITIAL AND lv_no IS NOT INITIAL.
+          MESSAGE ID lv_id TYPE 'S' NUMBER lv_no WITH lv_v1 lv_v2 lv_v3 lv_v4 INTO rv_txt.
+          RETURN.
+        ENDIF.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
 
   METHOD gravar_log.
     DATA: ls_log TYPE zfi_cbol_log,

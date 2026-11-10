@@ -18,7 +18,7 @@ CLASS zcl_fi_cbol_service DEFINITION PUBLIC FINAL CREATE PUBLIC.
       "! Existe titulo ja pago na NF? (para o aviso na tela do estorno)
       tem_titulo_pago IMPORTING iv_docnum      TYPE j_1bdocnum
                       RETURNING VALUE(rv_pago) TYPE abap_bool,
-      "! Etapa 1 - no pedido de estorno: guarda dados, limpa o boleto, grava monitor.
+      "! Etapa 1 - no pedido de estorno: guarda dados e grava monitor (nao altera o titulo).
       "! Nao faz COMMIT. Retorna ABAP_TRUE se houver titulo pago.
       registrar_pedido IMPORTING iv_docnum      TYPE j_1bdocnum
                        RETURNING VALUE(rv_pago) TYPE abap_bool,
@@ -31,7 +31,7 @@ CLASS zcl_fi_cbol_service DEFINITION PUBLIC FINAL CREATE PUBLIC.
                       RETURNING VALUE(rs_ret) TYPE zcl_fi_cbol_util=>ty_ret,
       confirmar_credito IMPORTING is_key TYPE zfi_cbol_mon
                         RETURNING VALUE(rs_ret) TYPE zcl_fi_cbol_util=>ty_ret,
-      "! SEFAZ rejeitou: devolve os dados do boleto ao titulo
+      "! SEFAZ rejeitou: marca o registro como rejeitado
       marcar_rejeitado IMPORTING is_key TYPE zfi_cbol_mon
                        RETURNING VALUE(rs_ret) TYPE zcl_fi_cbol_util=>ty_ret,
       "! Zera etapas com erro da NF para o job tentar de novo
@@ -98,18 +98,14 @@ CLASS zcl_fi_cbol_service IMPLEMENTATION.
       <m>-st_so  = c_pend.
 
       IF <m>-tipo = zcl_fi_cbol_titulo=>c_tipo_boleto.
+        " Nao altera o titulo aqui (estamos dentro do estorno da fatura).
+        " Limpeza dos dados do boleto, se habilitada, ocorre ao confirmar o banco.
         IF lv_ativo = abap_false.
           <m>-st_bol = c_simul.
-        ELSEIF zcl_fi_cbol_config=>limpar_titulo( ) = abap_false.
-          <m>-st_bol = c_na.   " so registra: o estorno da fatura encerra o titulo
+        ELSEIF zcl_fi_cbol_config=>limpar_titulo( ) = abap_true.
+          <m>-st_bol = c_pend.
         ELSE.
-          ls_ret = zcl_fi_cbol_titulo=>limpar_boleto( <m> ).
-          IF ls_ret-ok = abap_true.
-            <m>-st_bol = c_ok.
-          ELSE.
-            <m>-st_bol = c_erro.
-            <m>-msg_erro = ls_ret-msg.
-          ENDIF.
+          <m>-st_bol = c_na.
         ENDIF.
       ELSE.
         <m>-st_bol = c_na.   " titulo pago: sem baixa; financeiro lanca credito
@@ -320,6 +316,21 @@ CLASS zcl_fi_cbol_service IMPLEMENTATION.
       rs_ret-msg = 'Registro nao encontrado'.
       RETURN.
     ENDIF.
+    IF ls_mon-st_bol = c_pend AND zcl_fi_cbol_config=>is_ativo( ) = abap_true
+       AND zcl_fi_cbol_config=>limpar_titulo( ) = abap_true.
+      DATA(ls_lim) = zcl_fi_cbol_titulo=>limpar_boleto( ls_mon ).
+      IF ls_lim-ok = abap_true.
+        ls_mon-st_bol = c_ok.
+        ls_mon-msg_erro = space.
+      ELSE.
+        ls_mon-st_bol = c_erro.
+        ls_mon-msg_erro = |Limpeza do titulo: { ls_lim-msg }|.
+      ENDIF.
+      zcl_fi_cbol_util=>gravar_log( iv_docnum = ls_mon-docnum iv_bukrs = ls_mon-bukrs
+        iv_belnr = ls_mon-belnr iv_gjahr = ls_mon-gjahr iv_buzei = ls_mon-buzei
+        iv_etapa = 'LIMPEZA' iv_tipo = COND #( WHEN ls_lim-ok = abap_true THEN 'S' ELSE 'W' )
+        iv_texto = COND #( WHEN ls_lim-ok = abap_true THEN 'Dados do boleto limpos no titulo' ELSE ls_lim-msg ) ).
+    ENDIF.
     ls_mon-bco_ok   = 'X'.
     ls_mon-bco_user = sy-uname.
     ls_mon-bco_data = sy-datum.
@@ -369,17 +380,11 @@ CLASS zcl_fi_cbol_service IMPLEMENTATION.
       rs_ret-msg = 'So vale para registro aguardando SEFAZ'.
       RETURN.
     ENDIF.
-    IF ls_mon-st_bol = c_ok.
-      rs_ret = zcl_fi_cbol_titulo=>restaurar_boleto( ls_mon ).
-      IF rs_ret-ok = abap_false.
-        RETURN.
-      ENDIF.
-    ENDIF.
     ls_mon-status = c_st_rejeit.
     MODIFY zfi_cbol_mon FROM ls_mon.
     zcl_fi_cbol_util=>gravar_log( iv_docnum = ls_mon-docnum iv_bukrs = ls_mon-bukrs
       iv_belnr = ls_mon-belnr iv_gjahr = ls_mon-gjahr iv_buzei = ls_mon-buzei
-      iv_etapa = 'SEFAZ' iv_tipo = 'W' iv_texto = 'Cancelamento rejeitado: dados do boleto devolvidos ao titulo' ).
+      iv_etapa = 'SEFAZ' iv_tipo = 'W' iv_texto = 'SEFAZ rejeitou o cancelamento da NF' ).
     rs_ret-ok = abap_true.
   ENDMETHOD.
 

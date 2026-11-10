@@ -26,6 +26,8 @@ CLASS zcl_fi_cbol_logistica IMPLEMENTATION.
           lv_count TYPE i VALUE 1,
           lv_mblnr TYPE mblnr,
           lv_mjahr TYPE mjahr,
+          lv_vbtyp TYPE char1 VALUE 'J',
+          lv_tcode TYPE sytcode VALUE 'VL09',
           lo_err   TYPE REF TO cx_root.
 
     lv_vbeln = is_mon-vbeln_vl.
@@ -48,6 +50,10 @@ CLASS zcl_fi_cbol_logistica IMPLEMENTATION.
     GET REFERENCE OF lv_mblnr INTO ls_p-value. INSERT ls_p INTO TABLE lt_ptab.
     ls_p-name = 'I_MJAHR'. ls_p-kind = abap_func_exporting.
     GET REFERENCE OF lv_mjahr INTO ls_p-value. INSERT ls_p INTO TABLE lt_ptab.
+    ls_p-name = 'I_VBTYP'. ls_p-kind = abap_func_exporting.
+    GET REFERENCE OF lv_vbtyp INTO ls_p-value. INSERT ls_p INTO TABLE lt_ptab.
+    ls_p-name = 'I_TCODE'. ls_p-kind = abap_func_exporting.
+    GET REFERENCE OF lv_tcode INTO ls_p-value. INSERT ls_p INTO TABLE lt_ptab.
     ls_p-name = 'T_MESG'. ls_p-kind = abap_func_tables.
     GET REFERENCE OF lt_mesg INTO ls_p-value. INSERT ls_p INTO TABLE lt_ptab.
     ls_e-name = 'OTHERS'. ls_e-value = 1. INSERT ls_e INTO TABLE lt_etab.
@@ -61,7 +67,10 @@ CLASS zcl_fi_cbol_logistica IMPLEMENTATION.
         ELSE.
           rs_ret-msg = zcl_fi_cbol_util=>msg_sy( ).
           IF rs_ret-msg IS INITIAL.
-            rs_ret-msg = 'Estorno de mercadoria (VL09) retornou excecao'.
+            rs_ret-msg = zcl_fi_cbol_util=>texto_tabela( lt_mesg ).
+            IF rs_ret-msg IS INITIAL.
+              rs_ret-msg = 'Estorno de mercadoria (VL09) retornou excecao'.
+            ENDIF.
           ENDIF.
         ENDIF.
       CATCH cx_root INTO lo_err.
@@ -70,18 +79,33 @@ CLASS zcl_fi_cbol_logistica IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD excluir_remessa.
-    " Exclusao da remessa (VL02N > Remessa > Excluir). Chamada dinamica.
+    " Exclusao da remessa (VL02N > Remessa > Excluir) = WS_DELIVERY_UPDATE_2 com
+    " VBKOK_WA-LIKP_DEL = 'X' e o numero da remessa em DELIVERY. Chamada dinamica.
     DATA: lt_ptab  TYPE abap_func_parmbind_tab,
           ls_p     TYPE abap_func_parmbind,
           lt_etab  TYPE abap_func_excpbind_tab,
           ls_e     TYPE abap_func_excpbind,
           ls_vbkok TYPE vbkok,
-          lv_del   TYPE char1 VALUE 'X',
+          lt_prot  TYPE STANDARD TABLE OF prott,
+          lv_vbeln TYPE vbeln_vl,
+          lv_sync  TYPE char1 VALUE 'X',
           lv_com   TYPE char1 VALUE 'X',
+          lv_erro  TYPE xfeld,
           lo_err   TYPE REF TO cx_root.
+    FIELD-SYMBOLS <f> TYPE any.
 
-    ls_vbkok-vbeln_vl = is_mon-vbeln_vl.
-    ls_vbkok-vbtyp_vl = 'J'.
+    lv_vbeln = is_mon-vbeln_vl.
+
+    DEFINE _set.
+      ASSIGN COMPONENT &1 OF STRUCTURE ls_vbkok TO <f>.
+      IF sy-subrc = 0.
+        <f> = &2.
+      ENDIF.
+    END-OF-DEFINITION.
+    _set 'VBELN_VL' lv_vbeln.
+    _set 'VBELN'    lv_vbeln.
+    _set 'VBTYP_VL' 'J'.
+    _set 'LIKP_DEL' 'X'.
 
     IF zcl_fi_cbol_util=>fm_existe( 'WS_DELIVERY_UPDATE_2' ) = abap_false.
       rs_ret-msg = 'FM WS_DELIVERY_UPDATE_2 nao existe no sistema'.
@@ -90,22 +114,28 @@ CLASS zcl_fi_cbol_logistica IMPLEMENTATION.
 
     ls_p-name = 'VBKOK_WA'. ls_p-kind = abap_func_exporting.
     GET REFERENCE OF ls_vbkok INTO ls_p-value. INSERT ls_p INTO TABLE lt_ptab.
-    ls_p-name = 'DELETE_FLG'. ls_p-kind = abap_func_exporting.
-    GET REFERENCE OF lv_del INTO ls_p-value. INSERT ls_p INTO TABLE lt_ptab.
+    ls_p-name = 'DELIVERY'. ls_p-kind = abap_func_exporting.
+    GET REFERENCE OF lv_vbeln INTO ls_p-value. INSERT ls_p INTO TABLE lt_ptab.
+    ls_p-name = 'SYNCHRON'. ls_p-kind = abap_func_exporting.
+    GET REFERENCE OF lv_sync INTO ls_p-value. INSERT ls_p INTO TABLE lt_ptab.
     ls_p-name = 'COMMIT'. ls_p-kind = abap_func_exporting.
     GET REFERENCE OF lv_com INTO ls_p-value. INSERT ls_p INTO TABLE lt_ptab.
+    ls_p-name = 'EF_ERROR_ANY'. ls_p-kind = abap_func_importing.
+    GET REFERENCE OF lv_erro INTO ls_p-value. INSERT ls_p INTO TABLE lt_ptab.
+    ls_p-name = 'PROT'. ls_p-kind = abap_func_tables.
+    GET REFERENCE OF lt_prot INTO ls_p-value. INSERT ls_p INTO TABLE lt_ptab.
     ls_e-name = 'OTHERS'. ls_e-value = 1. INSERT ls_e INTO TABLE lt_etab.
 
     TRY.
         CALL FUNCTION 'WS_DELIVERY_UPDATE_2'
           PARAMETER-TABLE lt_ptab
           EXCEPTION-TABLE lt_etab.
-        IF sy-subrc = 0.
+        IF sy-subrc = 0 AND lv_erro IS INITIAL.
           rs_ret-ok = abap_true.
         ELSE.
-          rs_ret-msg = zcl_fi_cbol_util=>msg_sy( ).
+          rs_ret-msg = zcl_fi_cbol_util=>texto_tabela( lt_prot ).
           IF rs_ret-msg IS INITIAL.
-            rs_ret-msg = 'Exclusao de remessa (VL02N) retornou excecao'.
+            rs_ret-msg = 'Exclusao de remessa (VL02N) retornou erro'.
           ENDIF.
         ENDIF.
       CATCH cx_root INTO lo_err.
