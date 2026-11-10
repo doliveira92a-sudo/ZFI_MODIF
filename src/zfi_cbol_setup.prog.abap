@@ -10,6 +10,7 @@ START-OF-SELECTION.
   PERFORM criar USING 'ZFI_CBOL_MODO'        'P' 'S'  'S = simulacao (nada e alterado); X = ativo'.
   PERFORM criar USING 'ZFI_CBOL_ABGRU'       'P' 'Z1' 'Motivo de recusa dos itens da ordem (VA02)'.
   PERFORM criar USING 'ZFI_CBOL_LEMBRETE_H'  'P' '24' 'Horas ate o lembrete de boleto pendente no banco'.
+  PERFORM criar USING 'ZFI_CBOL_LIMPAR'      'P' ''   'X = tambem limpa dados do boleto no titulo (opcional)'.
   PERFORM criar USING 'ZFI_CBOL_REMETENTE'   'P' ''   'E-mail remetente (opcional)'.
   WRITE: / 'Preencha na STVARV (tipo S, uma linha por valor):'.
   WRITE: / '  ZFI_CBOL_EMAIL - destinatarios dos avisos'.

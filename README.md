@@ -9,9 +9,9 @@ e executa as etapas logisticas que hoje sao manuais.
 
 ### Fluxo
 
-1. **Pedido de estorno** (gancho na J1BNFE, rapido): para cada titulo de cliente da fatura da NF
+1. **Estorno da fatura** (gancho no user exit do VF11, rapido): para cada titulo de cliente da fatura da NF
    - sem `ANFBN` (Solicitacao L/C) preenchida: sem boleto (bonificacao, a vista) - so log;
-   - com L/C e em aberto: guarda copia dos dados, limpa `HBKID/HKTID/BVTYP/ANFBN/ANFBU/ANFBJ`, troca a Atribuicao (`ZUONR`) para "NF cancelada" e grava no monitor (status *aguardando SEFAZ*);
+   - com L/C e em aberto: guarda copia dos dados do boleto e grava no monitor (status *aguardando SEFAZ*). Opcionalmente (`ZFI_CBOL_LIMPAR`) limpa `HBKID/HKTID/BVTYP/ANFBN/ANFBU/ANFBJ` e troca a Atribuicao (`ZUONR`) para "NF cancelada";
    - titulo ja compensado (pago): aviso na tela, **nao bloqueia**; monitor marca "TITULO PAGO - lancar credito".
 2. **Apos autorizacao da SEFAZ** (job `ZFI_CBOL_JOB`, a cada poucos minutos): e-mail de aviso (boleto a cancelar no banco ou titulo pago) e, em ordem, **VL09** (estorno de mercadoria), **VL02N** (excluir remessa) e **VA02** (recusa por item, motivo na TVARV). Cada etapa grava status; erro nao trava as demais NFs.
 3. **Monitor `ZFI_CBOL`**: lista NFs estornadas, documentos ligados (fatura, remessa, doc. de material, ordem, doc. contabil de estorno), semaforos por etapa e colunas de acao (clique no icone): confirmar cancelado no banco, confirmar credito lancado, reprocessar, SEFAZ rejeitou, ver log.
@@ -45,6 +45,7 @@ Autorizacao: objeto padrao `F_BKPF_BUK` (ACTVT 03 exibir; 02 confirmar/reprocess
 | `ZFI_CBOL_BUKRS` | S | Empresas habilitadas (vazio = todas) |
 | `ZFI_CBOL_ABGRU` | P | Motivo de recusa da VA02 (padrao `Z1`) |
 | `ZFI_CBOL_LEMBRETE_H` | P | Horas ate o lembrete de pendencia no banco |
+| `ZFI_CBOL_LIMPAR` | P | `X` = alem de registrar, limpa os dados do boleto no titulo (padrao vazio: so registra) |
 | `ZFI_CBOL_REMETENTE` | P | Remetente (opcional) |
 
 ### Jobs
@@ -54,9 +55,26 @@ Autorizacao: objeto padrao `F_BKPF_BUK` (ACTVT 03 exibir; 02 confirmar/reprocess
 
 ### Pendente
 
-- **Gancho na J1BNFE**: substituir o bloqueio da mensagem 368 ("titulo em banco") por
-  `IF zcl_fi_cbol_hook=>on_estorno_solicitado( docnum ) = abap_false.` (usuario recusou -> abortar o estorno).
-  Aguardando localizar o codigo da mensagem.
+- **Gancho (manual, fora do abapGit)**: o bloqueio "titulo em banco" (mensagem 00/368) esta no user exit
+  `USEREXIT_NUMBER_RANGE_INV_DATE` do include `RV60AFZC` (estorno da fatura, VF11). Como e include do padrao,
+  o abapGit nao o leva: alterar no DEV e transportar. Substituir o trecho "verifica dados do titulo em aberto":
+
+```abap
+** verifica se foi gerado documento contabil
+    SELECT * FROM bkpf
+    WHERE awtyp = AWTYP AND
+          awkey = beleg.
+      EXIT.
+    ENDSELECT.
+    check sy-subrc IS INITIAL.
+
+** projeto 2026-025: registra o boleto no monitor ZFI_CBOL (nao bloqueia mais)
+    IF zcl_fi_cbol_hook=>on_estorno_fatura( bkpf-awkey ) = abap_false.
+      message e368(00) with 'Estorno cancelado pelo usuario' 'titulo ja pago'.
+    ENDIF.
+```
+
+  O hook nunca levanta excecao; so devolve `abap_false` se o usuario recusar o aviso de titulo pago (somente em dialogo).
 - Chamadas dinamicas a validar no DEV/QAS (assinatura na SE37): `FI_DOCUMENT_CHANGE`,
   `WS_REVERSE_GOODS_ISSUE`, `WS_DELIVERY_UPDATE_2`. Erro de parametro aparece no monitor, nao na ativacao.
 - Testar com usuario do Faturamento (autorizacao para alterar o titulo).

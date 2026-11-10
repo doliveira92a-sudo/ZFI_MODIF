@@ -6,7 +6,8 @@ CLASS zcl_fi_cbol_config DEFINITION PUBLIC FINAL CREATE PUBLIC.
       c_email      TYPE rvari_vnam VALUE 'ZFI_CBOL_EMAIL',
       c_remetente  TYPE rvari_vnam VALUE 'ZFI_CBOL_REMETENTE',
       c_lembrete_h TYPE rvari_vnam VALUE 'ZFI_CBOL_LEMBRETE_H',
-      c_abgru      TYPE rvari_vnam VALUE 'ZFI_CBOL_ABGRU'.
+      c_abgru      TYPE rvari_vnam VALUE 'ZFI_CBOL_ABGRU',
+      c_limpar     TYPE rvari_vnam VALUE 'ZFI_CBOL_LIMPAR'.
 
     TYPES: ty_r_bukrs TYPE RANGE OF bukrs.
 
@@ -16,6 +17,8 @@ CLASS zcl_fi_cbol_config DEFINITION PUBLIC FINAL CREATE PUBLIC.
       "! Empresa habilitada (lista vazia = todas)
       empresa_habilitada IMPORTING iv_bukrs TYPE bukrs
                          RETURNING VALUE(rv_ok) TYPE abap_bool,
+      "! 'X' = alem de registrar, limpa os dados do boleto no titulo (opcional)
+      limpar_titulo RETURNING VALUE(rv_limpar) TYPE abap_bool,
       get_emails RETURNING VALUE(rt_email) TYPE bcsy_smtpa,
       get_remetente RETURNING VALUE(rv_email) TYPE ad_smtpadr,
       get_lembrete_horas RETURNING VALUE(rv_horas) TYPE i,
@@ -61,6 +64,10 @@ CLASS zcl_fi_cbol_config IMPLEMENTATION.
     ENDIF.
     READ TABLE lt_bukrs TRANSPORTING NO FIELDS WITH KEY table_line = iv_bukrs.
     rv_ok = boolc( sy-subrc = 0 ).
+  ENDMETHOD.
+
+  METHOD limpar_titulo.
+    rv_limpar = boolc( get_low( c_limpar ) = 'X' ).
   ENDMETHOD.
 
   METHOD get_emails.

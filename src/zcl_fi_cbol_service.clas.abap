@@ -98,7 +98,11 @@ CLASS zcl_fi_cbol_service IMPLEMENTATION.
       <m>-st_so  = c_pend.
 
       IF <m>-tipo = zcl_fi_cbol_titulo=>c_tipo_boleto.
-        IF lv_ativo = abap_true.
+        IF lv_ativo = abap_false.
+          <m>-st_bol = c_simul.
+        ELSEIF zcl_fi_cbol_config=>limpar_titulo( ) = abap_false.
+          <m>-st_bol = c_na.   " so registra: o estorno da fatura encerra o titulo
+        ELSE.
           ls_ret = zcl_fi_cbol_titulo=>limpar_boleto( <m> ).
           IF ls_ret-ok = abap_true.
             <m>-st_bol = c_ok.
@@ -106,8 +110,6 @@ CLASS zcl_fi_cbol_service IMPLEMENTATION.
             <m>-st_bol = c_erro.
             <m>-msg_erro = ls_ret-msg.
           ENDIF.
-        ELSE.
-          <m>-st_bol = c_simul.
         ENDIF.
       ELSE.
         <m>-st_bol = c_na.   " titulo pago: sem baixa; financeiro lanca credito

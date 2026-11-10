@@ -58,7 +58,7 @@ CLASS zcl_fi_cbol_mail IMPLEMENTATION.
     ENDLOOP.
 
     IF lt_b IS NOT INITIAL.
-      adicionar( EXPORTING iv_txt = 'Estorno da NF autorizado pela SEFAZ. Boleto(s) ja baixado(s) no SAP.'
+      adicionar( EXPORTING iv_txt = 'Estorno da NF autorizado pela SEFAZ. Titulo(s) estornado(s) no SAP.'
                  CHANGING ct_txt = lt_h ).
       adicionar( EXPORTING iv_txt = ` ` CHANGING ct_txt = lt_h ).
       APPEND LINES OF lt_b TO lt_h.

@@ -170,7 +170,7 @@ CLASS lcl_mon IMPLEMENTATION.
 
       CASE <m>-tipo.
         WHEN 'B'.
-          ls_out-tipo_txt = 'Boleto cancelado SAP'.
+          ls_out-tipo_txt = 'Boleto em banco'.
           ls_out-st_banco = COND #( WHEN <m>-bco_ok = 'X' THEN icon_led_green ELSE icon_led_red ).
           ls_out-st_cred  = icon_led_inactive.
         WHEN 'P'.
@@ -207,7 +207,7 @@ CLASS lcl_mon IMPLEMENTATION.
 
 
     txt( iv_col = 'ST_SEFAZ' iv_s = 'SEFAZ' iv_m = 'Cancelamento SEFAZ' ).
-    txt( iv_col = 'ST_BOL' iv_s = 'Bol.SAP' iv_m = 'Boleto baixado no SAP' ).
+    txt( iv_col = 'ST_BOL' iv_s = 'Bol.SAP' iv_m = 'Dados do boleto limpos no SAP' ).
     txt( iv_col = 'ST_MB' iv_s = 'VL09' iv_m = 'Estorno mercadoria' ).
     txt( iv_col = 'ST_DL' iv_s = 'VL02N' iv_m = 'Remessa excluida' ).
     txt( iv_col = 'ST_SO' iv_s = 'VA02' iv_m = 'Ordem recusada' ).

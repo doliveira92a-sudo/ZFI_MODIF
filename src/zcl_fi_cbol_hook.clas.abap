@@ -1,15 +1,40 @@
 CLASS zcl_fi_cbol_hook DEFINITION PUBLIC FINAL CREATE PUBLIC.
   PUBLIC SECTION.
     CLASS-METHODS:
-      "! Chamar no ponto da J1BNFE onde hoje sai a mensagem 368 ("titulo em banco"),
-      "! no lugar do bloqueio. Nunca levanta excecao: qualquer erro vai para o log
-      "! e o estorno segue o fluxo normal.
-      "! RV_CONTINUAR = ABAP_FALSE somente se o usuario recusar no aviso de titulo pago.
+      "! Chamar no user exit USEREXIT_NUMBER_RANGE_INV_DATE (include RV60AFZC), no
+      "! lugar do bloqueio "titulo em banco". IV_AWKEY = chave de referencia do
+      "! documento contabil (BKPF-AWKEY = numero da fatura). Nunca levanta excecao.
+      "! RV_CONTINUAR = ABAP_FALSE somente se o usuario recusar o aviso de titulo pago.
+      on_estorno_fatura IMPORTING iv_awkey            TYPE awkey
+                        RETURNING VALUE(rv_continuar) TYPE abap_bool,
+      "! Mesma regra, partindo do DOCNUM da NF
       on_estorno_solicitado IMPORTING iv_docnum           TYPE j_1bdocnum
                             RETURNING VALUE(rv_continuar) TYPE abap_bool.
 ENDCLASS.
 
 CLASS zcl_fi_cbol_hook IMPLEMENTATION.
+
+  METHOD on_estorno_fatura.
+    DATA: lv_vbeln  TYPE vbeln_vf,
+          lv_refkey TYPE j_1brefkey,
+          lv_docnum TYPE j_1bdocnum,
+          lo_err    TYPE REF TO cx_root.
+
+    rv_continuar = abap_true.
+    TRY.
+        lv_vbeln  = iv_awkey(10).
+        lv_refkey = lv_vbeln.
+        SELECT docnum FROM j_1bnflin INTO lv_docnum UP TO 1 ROWS
+          WHERE reftyp = 'BI' AND refkey = lv_refkey.
+        ENDSELECT.
+        IF sy-subrc <> 0.
+          RETURN.      " fatura sem NF: nada a fazer
+        ENDIF.
+        rv_continuar = on_estorno_solicitado( lv_docnum ).
+      CATCH cx_root INTO lo_err.
+        rv_continuar = abap_true.
+    ENDTRY.
+  ENDMETHOD.
 
   METHOD on_estorno_solicitado.
     DATA: lv_pago TYPE abap_bool,
