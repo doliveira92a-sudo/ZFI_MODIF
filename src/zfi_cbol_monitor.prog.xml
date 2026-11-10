@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_PROG" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <PROGDIR>
+    <NAME>ZFI_CBOL_MONITOR</NAME>
+    <SUBC>1</SUBC>
+    <RLOAD>P</RLOAD>
+    <FIXPT>X</FIXPT>
+    <UNICODE>X</UNICODE>
+   </PROGDIR>
+   <TPOOL>
+   <item>
+    <ID>R</ID>
+    <ENTRY>Monitor estorno NF x boleto</ENTRY>
+    <LENGTH>27</LENGTH>
+   </item>
+   <item>
+    <ID>S</ID>
+    <KEY>S_BUKRS</KEY>
+    <ENTRY>Empresa</ENTRY>
+    <LENGTH>15</LENGTH>
+   </item>
+   <item>
+    <ID>S</ID>
+    <KEY>S_NFE</KEY>
+    <ENTRY>Numero da NF</ENTRY>
+    <LENGTH>20</LENGTH>
+   </item>
+   <item>
+    <ID>S</ID>
+    <KEY>S_KUNNR</KEY>
+    <ENTRY>Cliente</ENTRY>
+    <LENGTH>15</LENGTH>
+   </item>
+   <item>
+    <ID>S</ID>
+    <KEY>S_ERDAT</KEY>
+    <ENTRY>Data do pedido de estorno</ENTRY>
+    <LENGTH>33</LENGTH>
+   </item>
+   <item>
+    <ID>S</ID>
+    <KEY>P_PEND</KEY>
+    <ENTRY>Somente pendentes</ENTRY>
+    <LENGTH>25</LENGTH>
+   </item>
+   </TPOOL>
+  </asx:values>
+ </asx:abap>
+</abapGit>

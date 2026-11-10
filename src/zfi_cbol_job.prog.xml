@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_PROG" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <PROGDIR>
+    <NAME>ZFI_CBOL_JOB</NAME>
+    <SUBC>1</SUBC>
+    <RLOAD>P</RLOAD>
+    <FIXPT>X</FIXPT>
+    <UNICODE>X</UNICODE>
+   </PROGDIR>
+   <TPOOL>
+   <item>
+    <ID>R</ID>
+    <ENTRY>Job estorno NF x boleto</ENTRY>
+    <LENGTH>23</LENGTH>
+   </item>
+   <item>
+    <ID>S</ID>
+    <KEY>P_DOCNUM</KEY>
+    <ENTRY>Documento NF-e (DOCNUM)</ENTRY>
+    <LENGTH>31</LENGTH>
+   </item>
+   <item>
+    <ID>S</ID>
+    <KEY>P_REG</KEY>
+    <ENTRY>Teste: registrar pedido de estorno</ENTRY>
+    <LENGTH>42</LENGTH>
+   </item>
+   <item>
+    <ID>S</ID>
+    <KEY>P_LEMB</KEY>
+    <ENTRY>Enviar lembretes</ENTRY>
+    <LENGTH>24</LENGTH>
+   </item>
+   </TPOOL>
+  </asx:values>
+ </asx:abap>
+</abapGit>

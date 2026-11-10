@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_MSAG" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <T100A>
+    <ARBGB>ZFI_CBOL</ARBGB>
+    <MASTERLANG>P</MASTERLANG>
+    <STEXT>Estorno NF x cancelamento de boleto</STEXT>
+   </T100A>
+   <T100>
+    <T100>
+     <SPRSL>P</SPRSL>
+     <ARBGB>ZFI_CBOL</ARBGB>
+     <MSGNR>001</MSGNR>
+     <TEXT>NF &amp;1 tem titulo ja pago: sera preciso lancar credito ao cliente</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>P</SPRSL>
+     <ARBGB>ZFI_CBOL</ARBGB>
+     <MSGNR>002</MSGNR>
+     <TEXT>NF &amp;1 registrada no monitor de estorno de boleto</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>P</SPRSL>
+     <ARBGB>ZFI_CBOL</ARBGB>
+     <MSGNR>003</MSGNR>
+     <TEXT>Dados do boleto removidos do titulo &amp;1 &amp;2 &amp;3 &amp;4</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>P</SPRSL>
+     <ARBGB>ZFI_CBOL</ARBGB>
+     <MSGNR>004</MSGNR>
+     <TEXT>Erro ao alterar titulo &amp;1 &amp;2 &amp;3: &amp;4</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>P</SPRSL>
+     <ARBGB>ZFI_CBOL</ARBGB>
+     <MSGNR>005</MSGNR>
+     <TEXT>Sem autorizacao para confirmar na empresa &amp;1</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>P</SPRSL>
+     <ARBGB>ZFI_CBOL</ARBGB>
+     <MSGNR>006</MSGNR>
+     <TEXT>Modo simulacao: nada foi alterado no titulo &amp;1 &amp;2 &amp;3 &amp;4</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>P</SPRSL>
+     <ARBGB>ZFI_CBOL</ARBGB>
+     <MSGNR>007</MSGNR>
+     <TEXT>&amp;1 &amp;2 &amp;3 &amp;4</TEXT>
+    </T100>
+   </T100>
+  </asx:values>
+ </asx:abap>
+</abapGit>
